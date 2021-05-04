@@ -1,0 +1,81 @@
+## Introduction
+
+Welcome to the object detection Jupyter notebook overview my name is Stewart Christie. 
+
+Object detection algorithms have been part of visual computing for a long time. For example, in point-and-shoot cameras face detection is standard, but these are typically using traditional open cv algorithms because for example people must be facing the camera. Deep learning object detection has overcome these limitations. Here at Intel we see object detection being deployed in a wide range of applications. Here are a few of the success stories that you can look at that are available on the Intel.com website. A link to this AI production page is available in this course's reference material. 
+
+
+## UseCases
+Industrial examples here include welding qa contact lens testing and worker safety health and safety.
+
+Health Care examples include infection control medicine identification and supervised access management for public health and safety compliance.
+
+Retail applications include shelf inspection systems, customer accounting, and tracking service times safety and security systems have been deployed with AI to enable mask detection social distancing and temperature monitoring.
+
+Transportation use cases include touchless kiosks seat availability or parking lot occupancy and incident detection and response system.
+
+
+## Demo
+As you can see, this deployment of AI is enhancing existing systems and opening up new areas that were previously too costly or too time consuming for automating object detection. Models are extremely common so let's see how to deploy one using the Intel distribution of the OpenVINO toolkit. 
+
+This tutorial is based on a simple application and is set up to demonstrate object detection on images and video. We will download a pre-trained network, convert it, and then run the inference using the same CPU running this Jupyter notebook. So we're going to skip ahead and run right into the application. You can see here we have a set of library imports for Python. They are used to read the image and video files from disk. CV2 is OpenCV we use that to do some manipulation of the images. For example, change the size OpenCV is also used to draw a bounding box and labels for the detected object. We are using the time library to check how long it takes to run the inference and we're using the ie core object from the OpenVINO inference engine library. That's the part of OpenVINO used to run imprints. You see here there are two separate lines for matplotlib. We're importing the PI plot section as plt and then we also have what Juypter calls a magic command percent. 
+
+Matplotlib inline and that allows Juypter itself to use the matplotlib functions while the regular import is used by the Python program or application being run inside Jupyter notebook. So let's run this section and we see that all the modules are imported successfully.
+
+Now we need to get our models downloaded into our workspace. This happens in two steps. One to actually download the raw model and another step to convert or optimize the model to run the downloader PI program we need to specify the name of the model using the dash name option and the -o option is used to define the output directory. 
+
+A common practice in these Intel DevCloud notebooks is to save the model from the model zoo in the so-called raw model directory. If we take a look in that directory or just look at the downloader PI output we see two files: a dot cafe model and a dot prototext to convert a caffe model. We need to gather some detail from the model developer. For example, scale values, mean values and the input image shape.
+
+We could browse to Open Model Zoo and find the original author of this model, or we could use a shortcut provided by the zoo by examining the YAML file. In addition, there's a link to the original file and the description. Best of all this YAML file also includes the required model optimizer arguments. We could therefore copy this into the Jupyter notebook but instead for this tutorial we are going to use a helper program called converter.pi that reads the YAML file for us and then calls the model optimizer or mo.py. 
+
+Now let's run that converter.pi program. This actually runs a few times to create an fp32 and an fp16 XML and BIN files. Both versions have the same file name so they are stored in separate directories. Now we're going to create the configuration. We are defining the location of the model to use. In this case the fp32 XML and BIN files, we need an input image so it makes sense to choose an image that we're likely to detect. We can look in several places for example. There's a labels.txt file that we downloaded or you can browse the original Github repo.
+
+So choosing a car image is good for the device to run inference because we are running on a vm with no accelerators or GPU. Then we'll still choose the CPU as we mentioned before. We need a labels.txt file to convert from an index to a human readable string. 
+
+Dictionary.com defines inference as an educated guess. That's the human definition but for machine learning it's still a guess and the model will return a guesstimate for each object that it's been trained on. This probability of correctness is a number between zero and one and in this example we set the probability to 0.5 so we can ignore or discard bad guesses. Now that these are defined, we will create an inference instance called ie. Then we can create the network. 
+
+There's a check run after loading the network and the plugin to determine if the plugin has support for all the layer primitives. In the network, obviously this passes for this example, but this is a good thing to check when running this example on the edge devices that the CPU has the best support for layers. Then the GPU and then the VPU has less support and the FPGA plugin support for the least number of layers. 
+
+If you try and run inference and have unsupported layers then the system will report an error, but because of the edge device being run via batch or shell files it may not be obvious this has occurred. If you select a different model then this check will report an error. If it has multiple outputs, for example, a multi-output regression model outputting mean and standard deviation for a set of inputs. 
+
+Next we're going to load the model using the load network method. The number requests the set 2 as we're using a CPU the names of the input and output layers are stored in the input blob and output blob variables. If you wish to see what these layers are you can add a simple print statement to the cell the input and output layers for the model are described in the model. Through webpage but we can check those. 
+
+Here using the OpenVINO API net.input and net.outputs method as you can see here the input layer is called data and the output layer is called detection out.
+
+In the load labels section, the labels path is passed and the labels underscore map is loaded with all of the 20 objects that this model has been trained to detect. 
+
+In the prepare input section, we define a few functions: load input image, resize input image, and load input image uses OpenCV's cv2.video capture function to read. In this case, the next frame from the previously defined input path variable this is just reading from car.png so there is only one frame. The original image width and height are retrieved from the captured image using the cap get functions. Indexes 3 and 4 are used and this OpenCV document page of video capture properties shows why three and four are indeed the ones to use the second function resize input image actually performs three operations to convert the three color rgb card.bmp to match the model input layer cv2.
+
+Resize changes the image to 300x300 and cv2.transpose changes the array order from height width color to color height and width. 
+
+Finally the model, as we printed before has dimensions of one three and three hundred by three hundred. 
+
+Therefore, we use the cv2.reshape call to add the fourth dimension n to match the model's nchw format n is a batch number or image number c is three colors then h is height w is width both now set to 300. 
+
+Once these functions are set up, we call both these functions using the car.bmp to find earlier and use the math plotlibs imshow to display the original image. 
+
+This line of code disables the access display, but if we turn it back on we can check the dimensions. Originally, the image is about there you go 600 by 700 technically 637 by 749. 
+
+Let's run the inference. Here we go 41 milliseconds to detect the car processing. The result from an object detection model is a bit more complicated than just printing out the arrays from say the classification model or indeed from the style transfer model. This one sends back an array of arrays for each object detected. The complete data return consists of an image offset zero. In this case, there is only one image processed, an index into the label map a probability, a lower left x y, and an upper right x y location of the inferred object.
+
+In this case the x and y locations are scaled to the image dimensions. This makes finding the correct pixel as easy as multiplying the original image height stored in input underscore h by the x location. For this tutorial, the color is calculated based on the object index. So that different types of objects have different color bounding boxes.
+
+You may also hear this bounding box being called an ROI or region of interest. The descriptive text drawn along the top of the binding box shows the label, if available, and the confidence level converted to percentages.
+
+We've drawn a box around. Now we move on to the user exercises. Now that we have a working example to build on, exercise one is to try a different image. This is using a file called face.jpg. Naive users would therefore assume that we would detect the face, but remember this mobilenet ssd model has been trained on the voc-0712 dataset, and if your trust the label file then you will see there's not face object so what does it detect? 
+
+It actually detects the whole person. Note that because part of the body is obscured the confidence level drops to 84%.
+
+Exercise 2 is to run your own image. I'm going to be contrary here and run an image that every person will recognize as an airplane and see if this model can detect it. I've actually run this similar image on other models, and they've been unable to detect it because it was upside down.
+
+Exercise 3 is to run inference on the video. Running inference on the video is very similar to running inference on an image except that we have a loop that we run through until all the individual frames are processed. 
+
+Once again we set up our input path. In this instance, we'll be using a file called cars.mp4. We're doing a video capture from the mp4 file. We're writing out a video to output mp4 using the cv2 video writer function. As you can see we're just looping around until there are no more frames left. Inside the loop after unfairing we resize our image back to its original size then write out each processed frame to the output.mp4 file.
+
+Once we exit the loop we free up the resources and print done. Let's try it running this cell. We can skip forward and have a look at our video. You can see it's loaded here. We've got an eight second video and as you can see the closer the car gets to the front the better the accuracy of the object detection.
+
+Exercise 4 is to run your own video. If you'd like to try that it's simple enough. Here I'm just going to copy and paste the section here using CRTL-C. 
+
+We'll move back up to here hit CRTL-V. You can change this to any file you want, but this is one we've got on Github and then we run that cell again. Once again, it prints out it's loading the video and we wait for it to be done. It's a slightly longer video so it's going to take a bit longer to do so many frames. 
+
+As you can see we're detecting people's and cars and bicycles. Okay let's stop it there. Now that you've seen how to run these examples it's up to you to log on to the Intel DevCloud and try them for yourself and remember to run the receive credit cell once you've completed all the examples.  
